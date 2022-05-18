@@ -1,9 +1,9 @@
-const express = require("express");
-const User = require("../models/user");
-const auth = require("../middleware/auth");
-const multer = require("multer");
-const sharp = require("sharp");
-const { sendWelcomeEmail, sendByeEmail } = require("../emails/account");
+const express = require('express');
+const User = require('../models/user');
+const auth = require('../middleware/auth');
+const multer = require('multer');
+const sharp = require('sharp');
+const { sendWelcomeEmail, sendByeEmail } = require('../emails/account');
 
 const handleError = (err, req, res, next) => {
   res.status(400).send({ error: err.message });
@@ -15,7 +15,7 @@ const avatar = multer({
   },
   fileFilter: (req, file, cb) => {
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      cb(new Error("Please upload the JPG, JPEG or PNG file."));
+      cb(new Error('Please upload the JPG, JPEG or PNG file.'));
     }
 
     cb(undefined, true);
@@ -24,7 +24,7 @@ const avatar = multer({
 
 const router = new express.Router();
 
-router.post("/users", async (req, res) => {
+router.post('/users', async (req, res) => {
   const user = new User(req.body);
 
   try {
@@ -40,7 +40,7 @@ router.post("/users", async (req, res) => {
   }
 });
 
-router.post("/users/login", async (req, res) => {
+router.post('/users/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -53,10 +53,10 @@ router.post("/users/login", async (req, res) => {
   }
 });
 
-router.post("/users/logout", auth, async (req, res) => {
+router.post('/users/logout', auth, async (req, res) => {
   try {
     req.user.tokens = req.user.tokens.filter(
-      ({ token }) => token !== req.token
+      ({ token }) => token !== req.token,
     );
     await req.user.save();
 
@@ -66,7 +66,7 @@ router.post("/users/logout", auth, async (req, res) => {
   }
 });
 
-router.post("/users/logoutAll", auth, async (req, res) => {
+router.post('/users/logoutAll', auth, async (req, res) => {
   try {
     req.user.tokens = [];
     await req.user.save();
@@ -77,14 +77,14 @@ router.post("/users/logoutAll", auth, async (req, res) => {
   }
 });
 
-router.get("/users/me", auth, async (req, res) => {
+router.get('/users/me', auth, async (req, res) => {
   res.send(req.user);
 });
 
 router.post(
-  "/users/me/avatar",
+  '/users/me/avatar',
   auth,
-  avatar.single("avatar"),
+  avatar.single('avatar'),
   async (req, res) => {
     const buffer = await sharp(req.file.buffer)
       .resize({ width: 250, height: 250 })
@@ -94,10 +94,10 @@ router.post(
     await req.user.save();
     res.send();
   },
-  handleError
+  handleError,
 );
 
-router.get("/users/:id/avatar", async (req, res) => {
+router.get('/users/:id/avatar', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
 
@@ -105,7 +105,7 @@ router.get("/users/:id/avatar", async (req, res) => {
       throw new Error();
     }
 
-    res.set("Content-Type", "image/png");
+    res.set('Content-Type', 'image/png');
     res.send(user.avatar);
   } catch (e) {
     res.status(404).send();
@@ -113,7 +113,7 @@ router.get("/users/:id/avatar", async (req, res) => {
 });
 
 router.delete(
-  "/users/me/avatar",
+  '/users/me/avatar',
   auth,
   async (req, res, next) => {
     try {
@@ -125,10 +125,10 @@ router.delete(
       handleError(e, req, res, next);
     }
   },
-  handleError
+  handleError,
 );
 
-router.get("/users/:id", async (req, res) => {
+router.get('/users/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -143,17 +143,17 @@ router.get("/users/:id", async (req, res) => {
   }
 });
 
-router.patch("/users/me", auth, async (req, res) => {
+router.patch('/users/me', auth, async (req, res) => {
   const keysToUpdate = Object.keys(req.body);
-  const allowedKeys = ["name", "age", "password", "email"];
+  const allowedKeys = ['name', 'age', 'password', 'email'];
 
   const isValidOperation = keysToUpdate.every((key) =>
-    allowedKeys.includes(key)
+    allowedKeys.includes(key),
   );
 
   if (!isValidOperation) {
     return res.status(400).send({
-      error: "Invalid updates!",
+      error: 'Invalid updates!',
     });
   }
 
@@ -170,7 +170,7 @@ router.patch("/users/me", auth, async (req, res) => {
   }
 });
 
-router.delete("/users/me", auth, async (req, res) => {
+router.delete('/users/me', auth, async (req, res) => {
   try {
     await req.user.remove();
     sendByeEmail(req.user.email, req.user.name);
